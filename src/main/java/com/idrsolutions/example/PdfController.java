@@ -16,6 +16,9 @@
  */
 package com.idrsolutions.example;
 
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -25,6 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
+import java.io.FileInputStream;
 
 @RestController
 @RequestMapping("/pdf")
@@ -37,11 +41,20 @@ public class PdfController {
     }
 
     @PostMapping(value = "/convert", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<String> convertPdf(@RequestParam("file") final MultipartFile file) throws Exception {
+    public ResponseEntity<Resource> convertPdf(@RequestParam("file") final MultipartFile file,
+            @RequestParam("page") final int page) throws Exception {
+
         final File temp = File.createTempFile("upload", ".pdf");
         file.transferTo(temp);
-        pdfService.renderPdfToImage(temp, new File("output/"));
-        return ResponseEntity.ok("PDF converted");
+
+        final File output = pdfService.renderPdfToImage(temp, page);
+
+        final InputStreamResource resource = new InputStreamResource(new FileInputStream(output));
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + output.getName() + "\"")
+                .contentLength(output.length())
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(resource);
     }
 
 }

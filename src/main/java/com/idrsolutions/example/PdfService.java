@@ -17,7 +17,7 @@
 package com.idrsolutions.example;
 
 import com.idrsolutions.image.JDeli;
-import com.idrsolutions.image.gif.options.GifEncoderOptions;
+import com.idrsolutions.image.png.options.PngEncoderOptions;
 import org.jpedal.examples.images.ConvertPagesToImages;
 import org.springframework.stereotype.Service;
 
@@ -28,24 +28,30 @@ import java.nio.file.Paths;
 @Service
 public class PdfService {
 
-    public void renderPdfToImage(final File pdfFile, final File outputDir) throws Exception {
+    public File renderPdfToImage(final File pdfFile, final int page) throws Exception {
+        final File outputDir = new File("output");
+
         if (!outputDir.exists()) {
             outputDir.mkdirs();
         }
 
         final ConvertPagesToImages convert = new ConvertPagesToImages(pdfFile.getAbsolutePath());
 
-        if (convert.openPDFFile()) {
-            for (int page = 1; page <= convert.getPageCount(); page++) {
-                final BufferedImage bi = convert.getPageAsImage(page);
-
-                final File out = Paths.get(outputDir.getAbsolutePath(), page + ".gif").toFile();
-
-                final GifEncoderOptions options = new GifEncoderOptions();
-                JDeli.write(bi, options, out);
-            }
+        if (!convert.openPDFFile()) {
+            convert.closePDFfile();
         }
 
+        final BufferedImage bi = convert.getPageAsImage(page);
+
+        final File out = Paths.get(outputDir.getAbsolutePath(),
+                pdfFile.getName() + "-" + page + ".png").toFile();
+
+        final PngEncoderOptions options = new PngEncoderOptions();
+        JDeli.write(bi, options, out);
+
         convert.closePDFfile();
+
+        return out;
     }
+
 }
