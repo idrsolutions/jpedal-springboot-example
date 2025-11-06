@@ -30,26 +30,51 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.FileInputStream;
 
+/**
+ * PdfController handles HTTP requests related to PDF processing operations.
+ * <p>
+ * It exposes REST endpoints for converting uploaded PDF files into image files.
+ * The class delegates the PDF rendering logic to {@link PdfService}.
+ */
 @RestController
 @RequestMapping("/pdf")
 public class PdfController {
 
+    /** Service that handles PDF rendering and conversion operations. */
     private final PdfService pdfService;
 
+    /**
+     * Constructor for dependency injection of the PdfService.
+     *
+     * @param pdfService service responsible for rendering PDF pages to images
+     */
     public PdfController(final PdfService pdfService) {
         this.pdfService = pdfService;
     }
 
+    /**
+     * Converts a specific page of an uploaded PDF file into a PNG file.
+     *
+     * @param file the uploaded PDF file
+     * @param page the page number to render (page numbers start from 1)
+     * @return a ResponseEntity containing the PNG as a file resource
+     * @throws Exception if file operations or rendering fail
+     */
     @PostMapping(value = "/convert", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Resource> convertPdf(@RequestParam("file") final MultipartFile file,
             @RequestParam("page") final int page) throws Exception {
 
+        // Create a temporary file to store the uploaded PDF and save the uploaded content there
         final File temp = File.createTempFile("upload", ".pdf");
         file.transferTo(temp);
 
+        // Render to PNG
         final File output = pdfService.renderPdfToImage(temp, page);
 
+        // Create a Spring resource pointing to the PNG which can be used for the download
         final InputStreamResource resource = new InputStreamResource(new FileInputStream(output));
+
+        // Build HTTP response headers for the download
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + output.getName() + "\"")
                 .contentLength(output.length())
