@@ -1,5 +1,5 @@
 # JPedal Spring Boot Example
-An example project demonstrating how to use JPedal with the Spring Boot framework.
+An example project demonstrating how to use [JPedal](https://www.idrsolutions.com/jpedal/) with the Spring Boot framework.
 
 This project creates a microservice that converts PDF files into PNGs.
 
